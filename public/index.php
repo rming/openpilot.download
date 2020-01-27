@@ -7,6 +7,7 @@ use Slim\Factory\AppFactory;
 use RKA\Middleware\IpAddress;
 use GeoIp2\Database\Reader;
 use GeoIp2\Exception\AddressNotFoundException;
+use Slim\Middleware\ContentLengthMiddleware;
 
 require __DIR__ . '/../vendor/autoload.php';
 require __DIR__ . '/../geoip2/geoip2.phar';
@@ -18,6 +19,10 @@ $app = AppFactory::create();
 $checkProxyHeaders = true;
 $trustedProxies = ['10.0.0.1', '10.0.0.2'];
 $app->add(new IpAddress($checkProxyHeaders, $trustedProxies));
+// Content-length
+$contentLengthMiddleware = new ContentLengthMiddleware();
+$app->add($contentLengthMiddleware);
+
 
 $app->get('/', function ($request, $response, $args) {
     $response->getBody()->write("hello openpilot");
