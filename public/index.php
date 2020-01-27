@@ -24,7 +24,7 @@ $app->get('/', function ($request, $response, $args) {
     return $response;
 });
 
-$app->get('/{fork}/{branch}', function ($request, $response, $args) {
+$app->any('/{fork}/{branch}', function ($request, $response, $args) {
     $config = [
         'openpilot'=>[
             'default' =>'https://github.com/commaai/openpilot',
@@ -87,7 +87,7 @@ $app->get('/{fork}/{branch}', function ($request, $response, $args) {
     $installer = str_replace(array_keys($vars), array_values($vars), $installer);
 
     $response->getBody()->write($installer);
-    return $response;
+    return $response->withHeader('Content-Type', 'application/octet-stream');
 });
 
 $app->run();
