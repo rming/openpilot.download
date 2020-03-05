@@ -30,36 +30,14 @@ $app->get('/', function ($request, $response, $args) {
 });
 
 $app->any('/{fork}/{branch}', function ($request, $response, $args) {
-    $config = [
-        'openpilot'=>[
-            'default' =>'https://github.com/commaai/openpilot',
-            'cn'      =>'https://gitee.com/afaaa/openpilot',
-        ],
-        'afa'=>[
-            'default' =>'https://github.com/rming/openpilot',
-            'cn'      =>'https://gitee.com/afaaa/openpilot-cn',
-        ],
-        'dragonpilot'=>[
-            'default' =>'https://github.com/dragonpilot-community/dragonpilot',
-            'cn'      =>'https://gitee.com/afaaa/dragonpilot',
-        ],
-        'kegman'=>[
-            'default' =>'https://github.com/kegman/openpilot',
-            'cn'      =>'https://gitee.com/afaaa/kegman',
-        ],
-        'gernby'=>[
-            'default' =>'https://github.com/gernby/openpilot',
-            'cn'      =>'https://gitee.com/afaaa/gernby',
-        ],
-        'arne'=>[
-            'default' =>'https://github.com/arne182/openpilot',
-            'cn'      =>'https://gitee.com/afaaa/arne182',
-        ],
+    $forks = [
+        'commaai','afa','dragonpilot','kegman','gernby','arne',
     ];
     $alias = [
-        'dp'      =>'dragonpilot',
-        'op'      =>'openpilot',
-        'arne182' =>'arne'
+        'dp'        =>'dragonpilot',
+        'op'        =>'commaai',
+        'openpilot' =>'commaai',
+        'arne182'   =>'arne',
     ];
     $reader = new Reader(__DIR__ . '/../geoip2/mmdb/GeoLite2-City.mmdb');
     $params = $request->getQueryParams();
@@ -67,31 +45,27 @@ $app->any('/{fork}/{branch}', function ($request, $response, $args) {
     try {
         $data     = $reader->city($ip);
         $country  = strtolower($data->country->isoCode);
-        $timezone = $data->location->timeZone;
     } catch (Exception $e) {
         $country  = 'default';
-        $timezone = 'Africa/Lome';
     }
 
     $forkName   = $args['fork'];
     $branchName = $args['branch'];
     $forkName   = $alias[$forkName] ?? $forkName;
-    $forkConfig = $config[$forkName];
-    if (!$forkConfig) {
+    $inForks    = in_array($forkName, $forks);
+    if (!$inForks) {
         return $response->withStatus(404);
     }
 
-    $forkUrl = $forkConfig[$country] ?? $forkConfig['default'];
-    $vars    = [
-        '{branch_name}' =>$branchName,
-        '{fork_url}'    =>$forkUrl,
-        '{time_zone}'   =>$timezone,
-    ];
+    $country  = $country === 'cn' ? 'cn' : 'default';
+    $fileName = sprintf("installer_%s_%s_%s",$forkName, $branchName, $country);
 
-    $installer = file_get_contents(__DIR__ . '/../scripts/installer.py');
-    $installer = str_replace(array_keys($vars), array_values($vars), $installer);
+    $file = sprintf('%s/../../installers/%s', __DIR__, $fileName);
+    if (!file_exists($file)) {
+        return $response->withStatus(404);
+    }
 
-    $response->getBody()->write($installer);
+    $response->getBody()->write(file_get_contents($file));
     return $response->withHeader('Content-Type', 'application/octet-stream');
 });
 
