@@ -49,8 +49,8 @@ $app->any('/{fork}/{branch}', function ($request, $response, $args) {
         $country  = 'default';
     }
 
-    $forkName   = $args['fork'];
-    $branchName = $args['branch'];
+    $forkName   = strtolower($args['fork']);
+    $branchName = strtolower($args['branch']);
     $forkName   = $alias[$forkName] ?? $forkName;
     $inForks    = in_array($forkName, $forks);
     if (!$inForks) {
